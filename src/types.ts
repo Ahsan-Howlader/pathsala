@@ -2,6 +2,7 @@ export type PageId =
   | 'home'
   | 'conceptExplainer'
   | 'pomodoro'
+  | 'calendar'
   | 'tutor'
   | 'syllabus'
   | 'current'
@@ -54,6 +55,13 @@ export interface UserState {
   completedTopics: Record<string, TopicProgress>;
   studyMinutes: number;
   todayMinutes: number;
+  dailyStudyLog?: Record<string, number>;
+  timeSlotMinutes?: {
+    morning: number;
+    afternoon: number;
+    evening: number;
+    night: number;
+  };
   challengeScore: number;
   challengeStreak: number;
   lastChallengeDate: string;

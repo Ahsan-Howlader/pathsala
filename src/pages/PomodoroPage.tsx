@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Volume2, VolumeX, CloudRain, Coffee, Wind, Bell } from 'lucide-react';
-import { soundEffects } from '../services/soundEffects';
+import { Play, Pause, RotateCcw, Volume2, Volume1, VolumeX, CloudRain, Coffee, Wind, Trees, Sparkles, Sliders } from 'lucide-react';
+import { soundEffects, AmbientType } from '../services/soundEffects';
 
 interface PomodoroPageProps {
   onAddStudyMinutes: (mins: number) => void;
@@ -22,8 +22,16 @@ export const PomodoroPage: React.FC<PomodoroPageProps> = ({
   const [mode, setMode] = useState<Mode>('focus');
   const [timeLeft, setTimeLeft] = useState<number>(MODE_TIMES.focus);
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [ambientType, setAmbientType] = useState<'none' | 'rain' | 'whitenoise' | 'cafe'>('none');
+  const [ambientType, setAmbientType] = useState<AmbientType>('none');
+  const [ambientVolume, setAmbientVolume] = useState<number>(60);
   const [sessionsCompleted, setSessionsCompleted] = useState<number>(0);
+
+  // Stop ambient on unmount
+  useEffect(() => {
+    return () => {
+      soundEffects.stopAmbient();
+    };
+  }, []);
 
   // Timer loop
   useEffect(() => {
@@ -68,13 +76,24 @@ export const PomodoroPage: React.FC<PomodoroPageProps> = ({
     setTimeLeft(MODE_TIMES[newMode]);
   };
 
-  const handleAmbient = (type: 'none' | 'rain' | 'whitenoise' | 'cafe') => {
+  const handleAmbient = (type: AmbientType) => {
+    if (ambientType === type && type !== 'none') {
+      // Toggle off if clicking the active one
+      setAmbientType('none');
+      soundEffects.stopAmbient();
+      return;
+    }
     setAmbientType(type);
     if (type === 'none') {
       soundEffects.stopAmbient();
     } else {
-      soundEffects.startAmbient(type);
+      soundEffects.startAmbient(type, ambientVolume / 100);
     }
+  };
+
+  const handleVolumeChange = (newVol: number) => {
+    setAmbientVolume(newVol);
+    soundEffects.setAmbientVolume(newVol / 100);
   };
 
   const totalTime = MODE_TIMES[mode];
@@ -196,61 +215,114 @@ export const PomodoroPage: React.FC<PomodoroPageProps> = ({
         </div>
 
         {/* Ambient Sound Selector */}
-        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 w-full max-w-md">
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3 flex items-center justify-center gap-1.5">
-            <Volume2 className="w-4 h-4 text-indigo-500" />
-            <span>অ্যাম্বিয়েন্ট ফোকাস সাউন্ড (Web Audio Synth)</span>
+        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 w-full max-w-lg space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Volume2 className="w-4 h-4 text-indigo-500" />
+              <span>অ্যাম্বিয়েন্ট ব্যাকগ্রাউন্ড সাউন্ড (Ambient Audio)</span>
+            </div>
+
+            {ambientType !== 'none' && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>চলছে: {ambientType === 'rain' ? 'বৃষ্টি' : ambientType === 'cafe' ? 'ক্যাফে' : ambientType === 'nature' ? 'প্রকৃতি' : 'হোয়াইট নয়েজ'}</span>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             <button
+              type="button"
               onClick={() => handleAmbient('none')}
-              className={`p-2 rounded-xl text-xs font-medium border flex flex-col items-center gap-1 transition-colors ${
+              className={`p-3 rounded-2xl text-xs font-semibold border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 ambientType === 'none'
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                  ? 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500 shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
               }`}
             >
-              <VolumeX className="w-4 h-4" />
+              <VolumeX className="w-5 h-5 text-slate-400" />
               <span>নিস্তব্ধ</span>
             </button>
 
             <button
+              type="button"
               onClick={() => handleAmbient('rain')}
-              className={`p-2 rounded-xl text-xs font-medium border flex flex-col items-center gap-1 transition-colors ${
+              className={`p-3 rounded-2xl text-xs font-semibold border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 ambientType === 'rain'
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                  ? 'border-sky-500 bg-sky-50/70 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 ring-1 ring-sky-500 shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
               }`}
             >
-              <CloudRain className="w-4 h-4 text-sky-500" />
-              <span>বৃষ্টি</span>
+              <CloudRain className="w-5 h-5 text-sky-500" />
+              <span>বৃষ্টি (Rain)</span>
             </button>
 
             <button
+              type="button"
               onClick={() => handleAmbient('cafe')}
-              className={`p-2 rounded-xl text-xs font-medium border flex flex-col items-center gap-1 transition-colors ${
+              className={`p-3 rounded-2xl text-xs font-semibold border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 ambientType === 'cafe'
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                  ? 'border-amber-500 bg-amber-50/70 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500 shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
               }`}
             >
-              <Coffee className="w-4 h-4 text-amber-600" />
-              <span>ক্যাফে</span>
+              <Coffee className="w-5 h-5 text-amber-600" />
+              <span>ক্যাফে (Café)</span>
             </button>
 
             <button
-              onClick={() => handleAmbient('whitenoise')}
-              className={`p-2 rounded-xl text-xs font-medium border flex flex-col items-center gap-1 transition-colors ${
-                ambientType === 'whitenoise'
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+              type="button"
+              onClick={() => handleAmbient('nature')}
+              className={`p-3 rounded-2xl text-xs font-semibold border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                ambientType === 'nature'
+                  ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500 shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
               }`}
             >
-              <Wind className="w-4 h-4 text-slate-500" />
-              <span>হোয়াইট নয়েজ</span>
+              <Trees className="w-5 h-5 text-emerald-600" />
+              <span>প্রকৃতি (Nature)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleAmbient('whitenoise')}
+              className={`p-3 rounded-2xl text-xs font-semibold border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                ambientType === 'whitenoise'
+                  ? 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500 shadow-xs'
+                  : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+              }`}
+            >
+              <Wind className="w-5 h-5 text-slate-500" />
+              <span>ফোকাস নয়েজ</span>
             </button>
           </div>
+
+          {/* Volume Control Bar */}
+          {ambientType !== 'none' && (
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 flex items-center gap-3 animate-in fade-in duration-200">
+              <Volume1 className="w-4 h-4 text-slate-400 shrink-0" />
+              <input
+                type="range"
+                min="5"
+                max="100"
+                value={ambientVolume}
+                onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                className="w-full accent-indigo-600 cursor-pointer h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none"
+              />
+              <Volume2 className="w-4 h-4 text-slate-400 shrink-0" />
+              <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 w-9 text-right shrink-0">
+                {ambientVolume}%
+              </span>
+            </div>
+          )}
+
+          <p className="text-[11px] text-center text-slate-400">
+            {ambientType === 'rain' && '🌧️ বৃষ্টির রিমঝিম শব্দ বাইরের অনাকাঙ্ক্ষিত শব্দ ঢেকে রাখে।'}
+            {ambientType === 'cafe' && '☕ কফি শপের হালকা গুঞ্জন সৃজনশীল চিন্তা ও দীর্ঘ অধ্যয়নে সহায়ক।'}
+            {ambientType === 'nature' && '🌲 বনের মৃদু হাওয়া ও পাখির মিষ্টি কিচিরমিচির মানসিক ক্লান্তি কমায়।'}
+            {ambientType === 'whitenoise' && '💨 ধারাবাহিক সাউন্ড ওয়েভ পড়ার সময় অন্যমনস্ক হওয়া রোধ করে।'}
+            {ambientType === 'none' && 'পড়ার সময় একাগ্রতা ধরে রাখতে পছন্দের যেকোনো সাউন্ড নির্বাচন করুন।'}
+          </p>
         </div>
 
         {/* Completed stats */}

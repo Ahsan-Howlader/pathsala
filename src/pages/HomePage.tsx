@@ -10,10 +10,12 @@ import {
   FileCheck2,
   Mic,
   Headphones,
-  BookOpen
+  BookOpen,
+  Calendar
 } from 'lucide-react';
 import { PageId, UserProfile, UserState } from '../types';
 import { CURRENT_AFFAIRS_DATA } from '../data/studyData';
+import { ProfileBadgesInlineCard } from '../components/UserProfileModal';
 
 interface HomePageProps {
   user: UserProfile;
@@ -21,6 +23,7 @@ interface HomePageProps {
   totalTopicsCount: number;
   completedCount: number;
   onNavigate: (page: PageId) => void;
+  onOpenProfile?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -28,7 +31,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   userState,
   totalTopicsCount,
   completedCount,
-  onNavigate
+  onNavigate,
+  onOpenProfile = () => {}
 }) => {
   const progressPercent = totalTopicsCount > 0 ? Math.round((completedCount / totalTopicsCount) * 100) : 0;
   const latestGK = CURRENT_AFFAIRS_DATA[0];
@@ -61,11 +65,18 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span>আজকের কনসেপ্ট ক্লিয়ার করুন</span>
             </button>
             <button
-              onClick={() => onNavigate('pomodoro')}
+              onClick={() => onNavigate('calendar')}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500/40 hover:bg-indigo-500/60 border border-white/20 text-white font-medium text-xs sm:text-sm transition-colors"
             >
+              <Calendar className="w-4 h-4" />
+              <span>স্টাডি ক্যালেন্ডার ও প্ল্যানার</span>
+            </button>
+            <button
+              onClick={() => onNavigate('pomodoro')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-500/30 hover:bg-indigo-500/50 border border-white/10 text-white font-medium text-xs sm:text-sm transition-colors"
+            >
               <Clock className="w-4 h-4" />
-              <span>পমোডোরো শুরু করুন</span>
+              <span>পমোডোরো</span>
             </button>
           </div>
         </div>
@@ -74,19 +85,29 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="absolute right-0 -bottom-10 w-72 h-72 rounded-full bg-white/5 pointer-events-none blur-xl"></div>
       </div>
 
+      {/* User Profile Badges Showcase Card */}
+      <ProfileBadgesInlineCard user={user} userState={userState} onOpenProfile={onOpenProfile} />
+
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Study Time */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div
+          onClick={() => onNavigate('calendar')}
+          className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors group"
+        >
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
-            <span className="text-xs font-medium">অধ্যয়ন সময়</span>
-            <Clock className="w-4 h-4 text-indigo-500" />
+            <span className="text-xs font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              অধ্যয়ন সময় ও ক্যালেন্ডার
+            </span>
+            <Calendar className="w-4 h-4 text-indigo-500" />
           </div>
           <div className="text-2xl sm:text-3xl font-bold font-mono text-slate-900 dark:text-white tabular-nums">
             {userState.studyMinutes}
             <span className="text-xs font-normal text-slate-500 ml-1">মিনিট</span>
           </div>
-          <div className="mt-1 text-xs text-slate-400">আজকের ট্র্যাকিং ডেটা</div>
+          <div className="mt-1 text-xs text-indigo-600 dark:text-indigo-400 font-medium flex items-center gap-1">
+            <span>মাসিক ক্যালেন্ডার ভিউ ➔</span>
+          </div>
         </div>
 
         {/* Completed Topics */}

@@ -4,9 +4,11 @@ import { ALL_SYLLABUS_TOPICS } from './data/syllabusData';
 import { AuthModal } from './components/AuthModal';
 import { Sidebar } from './components/Sidebar';
 import { TopNav } from './components/TopNav';
+import { UserProfileModal } from './components/UserProfileModal';
 import { HomePage } from './pages/HomePage';
 import { ConceptExplainerPage } from './pages/ConceptExplainerPage';
 import { PomodoroPage } from './pages/PomodoroPage';
+import { StudyCalendarPage } from './pages/StudyCalendarPage';
 import { AITutorPage } from './pages/AITutorPage';
 import { SyllabusPage } from './pages/SyllabusPage';
 import { CurrentAffairsPage } from './pages/CurrentAffairsPage';
@@ -29,8 +31,23 @@ const DEFAULT_USER: UserProfile = {
 
 const DEFAULT_USER_STATE: UserState = {
   completedTopics: {},
-  studyMinutes: 45,
+  studyMinutes: 380,
   todayMinutes: 45,
+  dailyStudyLog: {
+    '2026-09-29': 45,
+    '2026-09-28': 60,
+    '2026-09-26': 90,
+    '2026-09-25': 50,
+    '2026-09-24': 45,
+    '2026-09-22': 50,
+    '2026-09-20': 40
+  },
+  timeSlotMinutes: {
+    morning: 160,
+    afternoon: 40,
+    evening: 120,
+    night: 60
+  },
   challengeScore: 120,
   challengeStreak: 4,
   lastChallengeDate: new Date().toISOString().split('T')[0],
@@ -88,6 +105,7 @@ export default function App() {
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [videoModalTopic, setVideoModalTopic] = useState<string | null>(null);
 
   // Sync dark mode class
@@ -136,12 +154,57 @@ export default function App() {
   };
 
   // State manipulation handlers
-  const handleAddStudyMinutes = (mins: number) => {
-    updateUserState((prev) => ({
-      ...prev,
-      studyMinutes: prev.studyMinutes + mins,
-      todayMinutes: prev.todayMinutes + mins
-    }));
+  const handleAddStudyMinutes = (mins: number, dateStr?: string) => {
+    const targetDate = dateStr || new Date().toISOString().split('T')[0];
+    const isToday = targetDate === new Date().toISOString().split('T')[0];
+    
+    // Determine time of day slot
+    const hour = new Date().getHours();
+    let slot: 'morning' | 'afternoon' | 'evening' | 'night' = 'morning';
+    if (hour >= 5 && hour < 12) slot = 'morning';
+    else if (hour >= 12 && hour < 17) slot = 'afternoon';
+    else if (hour >= 17 && hour < 22) slot = 'evening';
+    else slot = 'night';
+
+    updateUserState((prev) => {
+      const existingLog = { ...(prev.dailyStudyLog || {}) };
+      existingLog[targetDate] = (existingLog[targetDate] || 0) + mins;
+      
+      const existingSlots = {
+        morning: prev.timeSlotMinutes?.morning || 0,
+        afternoon: prev.timeSlotMinutes?.afternoon || 0,
+        evening: prev.timeSlotMinutes?.evening || 0,
+        night: prev.timeSlotMinutes?.night || 0
+      };
+      existingSlots[slot] += mins;
+
+      return {
+        ...prev,
+        studyMinutes: prev.studyMinutes + mins,
+        todayMinutes: isToday ? prev.todayMinutes + mins : prev.todayMinutes,
+        dailyStudyLog: existingLog,
+        timeSlotMinutes: existingSlots
+      };
+    });
+  };
+
+  const handleScheduleRevision = (subject: string, topic: string, dateStr: string) => {
+    updateUserState((prev) => {
+      const newItem: RevisionItem = {
+        id: Date.now().toString(),
+        topicId: topic,
+        subject,
+        topic,
+        addedAt: new Date().toISOString().split('T')[0],
+        nextReviewDate: dateStr,
+        intervalDays: 1,
+        stage: 1
+      };
+      return {
+        ...prev,
+        revisionQueue: [newItem, ...prev.revisionQueue]
+      };
+    });
   };
 
   const handleToggleTopic = (topicKey: string) => {
@@ -315,6 +378,17 @@ export default function App() {
         onToggleDarkMode={() => setIsDarkMode((d) => !d)}
         isOpenMobile={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
+      />
+
+      {/* User Profile & Badges Modal */}
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        user={currentUser || DEFAULT_USER}
+        userState={userState}
+        completedCount={completedCount}
+        totalTopicsCount={totalTopicsCount}
       />
 
       {/* Main Content Area */}
@@ -328,6 +402,7 @@ export default function App() {
           userState={userState}
           totalTopicsCount={totalTopicsCount}
           completedCount={completedCount}
+          onOpenProfile={() => setIsProfileModalOpen(true)}
         />
 
         {/* Dynamic Page Router */}
@@ -339,6 +414,7 @@ export default function App() {
               totalTopicsCount={totalTopicsCount}
               completedCount={completedCount}
               onNavigate={setCurrentPage}
+              onOpenProfile={() => setIsProfileModalOpen(true)}
             />
           )}
 
@@ -354,6 +430,17 @@ export default function App() {
             <PomodoroPage
               onAddStudyMinutes={handleAddStudyMinutes}
               totalStudyMinutes={userState.studyMinutes}
+            />
+          )}
+
+          {currentPage === 'calendar' && (
+            <StudyCalendarPage
+              userState={userState}
+              onAdvanceRevision={handleAdvanceRevision}
+              onAddStudyMinutes={handleAddStudyMinutes}
+              onScheduleRevision={handleScheduleRevision}
+              onClarifyConcept={handleClarifyConcept}
+              user={currentUser || DEFAULT_USER}
             />
           )}
 
@@ -413,6 +500,7 @@ export default function App() {
               isDarkMode={isDarkMode}
               onToggleDarkMode={() => setIsDarkMode((d) => !d)}
               onResetUserData={handleResetUserData}
+              onOpenProfile={() => setIsProfileModalOpen(true)}
             />
           )}
         </main>

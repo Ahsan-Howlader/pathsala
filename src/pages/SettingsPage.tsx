@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Settings, Cloud, Download, Trash2, CheckCircle2, Moon, Sun, Volume2 } from 'lucide-react';
 import { UserProfile, UserState } from '../types';
 import { soundEffects } from '../services/soundEffects';
+import { ProfileBadgesInlineCard } from '../components/UserProfileModal';
 
 interface SettingsPageProps {
   user: UserProfile;
@@ -9,6 +10,7 @@ interface SettingsPageProps {
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   onResetUserData: () => void;
+  onOpenProfile?: () => void;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
@@ -16,7 +18,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   userState,
   isDarkMode,
   onToggleDarkMode,
-  onResetUserData
+  onResetUserData,
+  onOpenProfile = () => {}
 }) => {
   const [sheetUrl, setSheetUrl] = useState(() => localStorage.getItem('pathsala_db_url') || '');
   const [syncStatus, setSyncStatus] = useState<string>('');
@@ -119,6 +122,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* User Profile & Badges Card */}
+      <ProfileBadgesInlineCard user={user} userState={userState} onOpenProfile={onOpenProfile} />
 
       {/* Google Sheets Sync Card */}
       <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">

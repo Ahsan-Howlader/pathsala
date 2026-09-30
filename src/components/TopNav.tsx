@@ -1,6 +1,7 @@
 import React from 'react';
-import { Menu, Lightbulb, Flame, Clock, BookCheck } from 'lucide-react';
+import { Menu, Lightbulb, Flame, Clock, BookCheck, Award } from 'lucide-react';
 import { PageId, UserProfile, UserState } from '../types';
+import { evaluateUserBadges } from '../services/badgeService';
 
 interface TopNavProps {
   currentPage: PageId;
@@ -10,12 +11,14 @@ interface TopNavProps {
   userState: UserState;
   totalTopicsCount: number;
   completedCount: number;
+  onOpenProfile: () => void;
 }
 
 const PAGE_TITLES: Record<PageId, { title: string; subtitle: string }> = {
   home: { title: 'ড্যাশবোর্ড ও স্টাডি স্পেস', subtitle: 'আপনার সরকারি চাকরি প্রস্তুতি হাব' },
   conceptExplainer: { title: 'AI Concept Clarifier', subtitle: 'যেকোনো কঠিন টপিকের স্পষ্ট ব্যাখ্যা ও শর্টকাট' },
   pomodoro: { title: 'Pomodoro Study Timer', subtitle: 'ফোকাসড স্টাডি সেশন ও অ্যাম্বিয়েন্ট ব্যাকগ্রাউন্ড' },
+  calendar: { title: 'Study Calendar & Planner', subtitle: 'মাসিক অধ্যয়ন সময় ও রিভিশন টাস্ক পর্যবেক্ষণ' },
   tutor: { title: 'AI Private Tutor', subtitle: 'বিসিএস ও ব্যাংক পরীক্ষার ২৪/৭ স্টাডি পার্টনার' },
   syllabus: { title: 'Syllabus & Video Lessons', subtitle: 'টপিকভিত্তিক সিলেবাস ও ইউটিউব ক্লাস' },
   current: { title: 'AI Live GK & Affairs', subtitle: 'সাম্প্রতিক তথ্য ও বাংলাদেশ-আন্তর্জাতিক সাধারণ জ্ঞান' },
@@ -37,13 +40,17 @@ export const TopNav: React.FC<TopNavProps> = ({
   user,
   userState,
   totalTopicsCount,
-  completedCount
+  completedCount,
+  onOpenProfile
 }) => {
   const currentInfo = PAGE_TITLES[currentPage] || { title: 'পাঠশালা', subtitle: 'স্টাডি পোর্টাল' };
   const dueRevisions = userState.revisionQueue.filter((item) => {
     const today = new Date().toISOString().split('T')[0];
     return item.nextReviewDate <= today;
   }).length;
+
+  const badges = evaluateUserBadges(userState);
+  const unlockedBadgesCount = badges.filter((b) => b.isUnlocked).length;
 
   return (
     <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-3 transition-colors">
@@ -99,17 +106,37 @@ export const TopNav: React.FC<TopNavProps> = ({
           )}
         </div>
 
-        {/* Right Zone: Primary Action */}
-        <div className="flex items-center gap-2">
+        {/* Right Zone: Primary Action & Profile Avatar */}
+        <div className="flex items-center gap-2.5">
           {currentPage !== 'conceptExplainer' && (
             <button
               onClick={() => onNavigate('conceptExplainer')}
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-colors whitespace-nowrap"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-colors whitespace-nowrap"
             >
               <Lightbulb className="w-3.5 h-3.5" />
               <span>আজকের পড়া ক্লিয়ার করুন</span>
             </button>
           )}
+
+          {/* User Profile & Badges Trigger */}
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            className="flex items-center gap-2 p-1.5 pl-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors group"
+            title="ইউজার প্রোফাইল ও অর্জিত ব্যাজ দেখুন"
+          >
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
+              <span className="hidden sm:inline truncate max-w-[100px]">{user.name}</span>
+              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
+                <Award className="w-3 h-3 text-amber-500" />
+                <span>{unlockedBadgesCount}</span>
+              </span>
+            </div>
+
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-400 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+              {user.name.charAt(0) || 'প'}
+            </div>
+          </button>
         </div>
       </div>
     </header>

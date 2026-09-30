@@ -3,6 +3,7 @@ import {
   Home,
   Lightbulb,
   Clock,
+  Calendar,
   Bot,
   BookOpen,
   Sparkles,
@@ -31,12 +32,14 @@ interface SidebarProps {
   onToggleDarkMode: () => void;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
+  onOpenProfile?: () => void;
 }
 
 const NAV_ITEMS: { id: PageId; label: string; icon: React.FC<{ className?: string }> }[] = [
   { id: 'home', label: 'Home / ড্যাশবোর্ড', icon: Home },
   { id: 'conceptExplainer', label: 'AI Concept Clarifier', icon: Lightbulb },
   { id: 'pomodoro', label: 'Pomodoro Study Timer', icon: Clock },
+  { id: 'calendar', label: 'Study Calendar & Planner', icon: Calendar },
   { id: 'tutor', label: 'AI Tutor & Assistant', icon: Bot },
   { id: 'syllabus', label: 'Syllabus & Video Lessons', icon: BookOpen },
   { id: 'current', label: 'AI Live GK & Affairs', icon: Sparkles },
@@ -59,7 +62,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   onToggleDarkMode,
   isOpenMobile,
-  onCloseMobile
+  onCloseMobile,
+  onOpenProfile
 }) => {
   return (
     <>
@@ -78,19 +82,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Brand header */}
         <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-              প
+          <div
+            onClick={onOpenProfile}
+            className="flex items-center gap-2.5 cursor-pointer group flex-1 mr-2"
+            title="ইউজার প্রোফাইল ও ব্যাজ দেখুন"
+          >
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-bold text-lg shadow-sm group-hover:scale-105 transition-transform">
+              {user.name.charAt(0) || 'প'}
             </div>
-            <div>
-              <div className="font-bold text-base text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
-                <span>পাঠশালা</span>
-                <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+            <div className="min-w-0">
+              <div className="font-bold text-base text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                <span className="truncate">পাঠশালা</span>
+                <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
                   AI Hub
                 </span>
               </div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[130px]">
-                {user.name}
+                {user.name} 🎖️
               </div>
             </div>
           </div>
