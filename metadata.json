@@ -1,0 +1,6 @@
+{
+  "name": "Pathsala — AI Study Room (পাঠশালা)",
+  "description": "Comprehensive automated government job preparation hub for BCS, Bank, Primary and Govt recruitment with AI Concept Clarifier, Mock Tests, Viva Simulator, Pomodoro, and Revision Queue.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
